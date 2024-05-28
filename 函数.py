@@ -1,77 +1,79 @@
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-from statsmodels.tsa.stattools import adfuller,kpss
-from statsmodels.tsa.arima.model import ARIMA
-import statsmodels.api as sm
-import itertools
-import seaborn as sns
-from sklearn.model_selection import train_test_split
-from scipy.stats import shapiro
-import chardet
-import warnings
-plt.rcParams['font.sans-serif'] = ['SimHei']
+进口numpy如同铭牌
+进口熊猫如同螺纹中径
+进口matplotlib.pyplot如同plt
+从statsmodels.tsa.stattools进口kpss阿德富勒公司
+从statsmodels.tsa.arima.model进口ARIMA
+进口statsmodels.api如同钐
+进口itertools
+进口海生的如同社交网站（Social Network Site的缩写）
+从sklearn.model_selection进口训练_测试_分割
+从scipy.stats进口夏皮罗
+进口沙尔代
+进口警告信息
+plt。rcParams[' font.sans-serif '] = [西姆黑]
 
 
-class Error(Exception):
+班级错误(例外):
 
-    def __init__(self, message):
-        self.message = message
+    极好的 __init__(自我，信息):
+自我。消息=消息
 
-    def __str__(self):
-        return self.message
+    极好的 __str__(自己):
+        返回自我。消息
 
-#仅支持10%，5%，1%三种输入
-#进行kpss和adf两种检验，均通过则认为平稳，有一种不通过则认为不平稳
-def data_adf(data,c='5%',ft=False):
+#仅支持10%,5%,1%三种输入
+#进行kpss和单位根检验两种检验,均通过则认为平稳,有一种不通过则认为不平稳
+极好的 数据_adf(数据，c='5%'，英尺=错误的):
 
     #报错
-    if c != '1%' and c != '5%' and c != '10%':
-        raise Error('c仅支持10%，5%，1%三种输入')
-    if ft != True and ft != False:
-        raise Error('ft仅支持输入True或False')
+    如果c！='1%' 和c！='5%' 和c！='10%':
+        上升 错误(c仅支持10%,5%,1%三种输入')
+    如果ft！=真实的 和ft！=错误的:
+        上升 错误(脚仅支持输入真实的或“错误”)
 
-    warnings.filterwarnings('ignore', category=UserWarning,
-                            message='The test statistic is outside of the range of p-values')#用于忽略警告
+警告。筛选器警告('忽略'，category=UserWarning
+消息=测试统计超出了p值的范围)#用于忽略警告
 
-    result1 = adfuller(data)  #adf检验
-    result2 = kpss(data)     #kpss检验
+结果1 =阿德富勒(数据)  #adf检验
+结果2 =kpss(数据)     # kpss检验
 
     #adf检验下的差分次数
-    re = result1[4][c]
-    i=0
-    while result1[0]>re:
-        i = i + 1
-        data1=data.diff(i)
-        data1=data1.fillna(0)
-        result1=adfuller(data1)
+re =结果1[4][c]
+我=0
+    在…期间结果1[0]>回复:
+i = i +1
+数据1 =数据。差速器(i)
+数据1 =数据1。菲尔娜(0)
+结果1=阿德富勒(数据1)
 
-    #kpss检验下的差分次数
-    res=result2[3][c]
-    j=0
-    while result2[0]>res:
-        j=j+1
-        data2=data.diff(j)
-        data2=data2.fillna(0)
-        result2=kpss(data2)
+    # kpss检验下的差分次数
+res =结果2[3][c]
+j=0
+    在…期间结果2[0]>分辨率:
+j=j+1
+data2 =数据。差速器(j)
+数据2 =数据2。菲尔娜(0)
+结果2=kpss(数据2)
 
-    #判断数据需要的差分次数，以kpss和adf差分次数较高的为最后结果
-    if i>=j:
-        result=result2
-        name='adf'
-    else:
-        i=j
-        result=result1
-        name='kpaa'
+    #判断数据需要的差分次数,以kpss和单位根检验差分次数较高的为最后结果
+    如果i>=j:
+结果=结果2
+名称=adf '
+    其他:
+i=j
+结果=结果1
+名称=kpaa '
 
     #画图
-    if ft:
-        plt.figure()
-        plt.plot(range(len(data)),data)
-        plt.show()
+    如果英尺:
+plt。数字()
+plt。情节(范围(低输入联网（low-entry networking的缩写）(数据))数据，标签='原数据')
+plt。情节(范围(低输入联网（low-entry networking的缩写）(数据)-1)，np。差速器(数据，n=i)，标签='差分后数据')
+plt。神话；传奇()
+plt。显示()
 
     #输出结果
-    if i==0:
+    如果我==0:
         print('数据平稳，无需差分')
         print(f'{name}检验的统计量与临界值:')
         print(result)
@@ -85,16 +87,20 @@ def data_adf(data,c='5%',ft=False):
         return i
 
 #白噪声检验
-def lb(data,sl=0.05):
+def lb(data,sl='5%'):
 
+    #报错
+    if sl!='5%' and sl!='1%'and sl!='10%':
+        raise Error('sl仅支持10%，5%，1%三种输入')
+    sl=float(sl[:1])*0.01
     #进行白噪声检验
     lb = sm.stats.diagnostic.acorr_ljungbox(data, return_df=False)
 
     #输出白噪声检验结果
-    if all(lb['lb_pvalue'] > sl):
-        print("数据可能是白噪声。")
-    else:
+    if all(lb['lb_pvalue'] < sl):
         print("数据不是白噪声。")
+    else:
+        print("数据可能是白噪声。")
 
     #输出白噪声检验统计量与p值
     print('白噪声检验的统计量与p值')
@@ -299,5 +305,8 @@ def bianma(path):
         result = chardet.detect(rawdata)
 
     return result['encoding']
+
+
+
 
 
